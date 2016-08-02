@@ -25,7 +25,7 @@ module Fastlane
         repo_pathname = Pathname.new(repo_path)
 
 
-        build_file_paths = Dir[File.expand_path(File.join('../**/',app_folder_name,'build.gradle'))]
+        build_file_paths = Dir[File.expand_path(File.join('**/',app_folder_name,'build.gradle'))]
 
         # no build.gradle found: error
         UI.user_error!('Could not find a build.gradle in the current repository\'s working directory.') if build_file_paths.count == 0
