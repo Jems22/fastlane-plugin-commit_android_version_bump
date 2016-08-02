@@ -10,7 +10,7 @@ module Fastlane
         app_folder_name ||= params[:app_folder_name]
         UI.message("The commit_android_version_bump plugin is looking inside your project folder (#{app_folder_name})!")
 
-        build_folder_paths = Dir[File.expand_path(File.join('../**/',app_folder_name))]
+        build_folder_paths = Dir[File.expand_path(File.join('**/',app_folder_name))]
         # no build.gradle found: error
         UI.user_error!('Could not find a build folder in the current repository\'s working directory.') if build_folder_paths.count == 0
         # too many projects found: error
