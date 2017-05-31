@@ -7,37 +7,49 @@ module Fastlane
           require 'set'
         require 'shellwords'
 
-        app_folder_name ||= params[:app_folder_name]
-        UI.message("The commit_android_version_bump plugin is looking inside your project folder (#{app_folder_name})!")
+        build_file_folder ||= params[:gradle_file_folder]
+        if build_file_folder != nil
+            UI.message("The commit_android_version_bump plugin will use gradle file at (#{build_file_folder})!")
 
-        build_folder_paths = Dir[File.expand_path(File.join('**/', app_folder_name))].reject { |file| ['build/', 'node_modules/'].any? { |part| file.include? part } }
-        # no build.gradle found: error
-        UI.user_error!('Could not find a build folder in the current repository\'s working directory.') if build_folder_paths.count == 0
+            absolute_path = File.expand_path(build_file_folder)
+            build_file_path = build_file_folder+"/build.gradle"
+            # find the repo root path
+            repo_path = Actions.sh("git -C #{absolute_path} rev-parse --show-toplevel").strip
+            repo_pathname = Pathname.new(repo_path)
+        else
+            app_folder_name ||= params[:app_folder_name]
+            UI.message("The commit_android_version_bump plugin is looking inside your project folder (#{app_folder_name})!")
 
-        UI.message("Found the following project path: #{build_folder_paths}")
-        # too many projects found: error
-        if build_folder_paths.count > 1
-            UI.user_error!("Found multiple build.gradle projects in the current repository's working directory.")
+            build_folder_paths = Dir[File.expand_path(File.join('**/', app_folder_name))].reject { |file| ['build/', 'node_modules/'].any? { |part| file.include? part } }
+            # no build.gradle found: error
+            UI.user_error!('Could not find a build folder in the current repository\'s working directory.') if build_folder_paths.count == 0
+
+            UI.message("Found the following project path: #{build_folder_paths}")
+            # too many projects found: error
+            if build_folder_paths.count > 1
+                UI.user_error!("Found multiple build.gradle projects in the current repository's working directory.")
+            end
+
+            build_folder_path = build_folder_paths.first
+
+            # find the repo root path
+            repo_path = Actions.sh("git -C #{build_folder_path} rev-parse --show-toplevel").strip
+            repo_pathname = Pathname.new(repo_path)
+
+
+            build_file_paths = Dir[File.expand_path(File.join('**/', app_folder_name, 'build.gradle'))].reject { |file| file.include? 'node_modules/' }
+
+            # no build.gradle found: error
+            UI.user_error!('Could not find a build.gradle in the current repository\'s working directory.') if
+                build_file_paths.count == 0
+            # too many projects found: error
+            if build_file_paths.count > 1
+                UI.user_error!("Found multiple build.gradle projects in the current repository's working directory.")
+            end
+
+            build_file_path = build_file_paths.first
+            build_file_path.replace build_file_path.sub("#{repo_pathname}/", "")
         end
-
-        build_folder_path = build_folder_paths.first
-
-        # find the repo root path
-        repo_path = Actions.sh("git -C #{build_folder_path} rev-parse --show-toplevel").strip
-        repo_pathname = Pathname.new(repo_path)
-
-
-        build_file_paths = Dir[File.expand_path(File.join('**/', app_folder_name, 'build.gradle'))].reject { |file| file.include? 'node_modules/' }
-
-        # no build.gradle found: error
-        UI.user_error!('Could not find a build.gradle in the current repository\'s working directory.') if build_file_paths.count == 0
-        # too many projects found: error
-        if build_file_paths.count > 1
-            UI.user_error!("Found multiple build.gradle projects in the current repository's working directory.")
-        end
-
-        build_file_path = build_file_paths.first
-        build_file_path.replace build_file_path.sub("#{repo_pathname}/", "")
 
         # create our list of files that we expect to have changed, they should all be relative to the project root, which should be equal to the git workdir root
         expected_changed_files = []
@@ -98,7 +110,7 @@ module Fastlane
       end
 
       def self.authors
-        ["jems"]
+        ["Jems"]
       end
 
       def self.available_options
@@ -113,6 +125,12 @@ module Fastlane
                                     optional: true,
                                         type: String,
                                 default_value:"app"),
+            FastlaneCore::ConfigItem.new(key: :gradle_file_folder,
+                                    env_name: "CVB_GRADLE_FILE_FOLDER",
+                                 description: "The relative path to the folder that contains the gradle file containing the modification to commit (example :project/app)",
+                                    optional: true,
+                                        type: String,
+                                   default_value: nil),
            FastlaneCore::ConfigItem.new(key: :force,
                                    env_name: "CVB_FORCE_COMMIT",
                                 description: "Forces the commit, even if other files than the ones containing the version number have been modified",
