@@ -12,10 +12,13 @@ module Fastlane
             UI.message("The commit_android_version_bump plugin will use gradle file at (#{build_file_folder})!")
 
             absolute_path = File.expand_path(build_file_folder)
-            build_file_path = build_file_folder+"/build.gradle"
+            build_file_path = absolute_path + "/build.gradle"
+
             # find the repo root path
             repo_path = Actions.sh("git -C #{absolute_path} rev-parse --show-toplevel").strip
             repo_pathname = Pathname.new(repo_path)
+
+            build_file_path.replace build_file_path.sub("#{repo_pathname}/", "")
         else
             app_folder_name ||= params[:app_folder_name]
             UI.message("The commit_android_version_bump plugin is looking inside your project folder (#{app_folder_name})!")
