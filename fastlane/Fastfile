@@ -1,5 +1,6 @@
 lane :test do
   commit_android_version_bump(
-    gradle_file_folder:"project"
+    gradle_file_folder:"project",
+    # message: "Custom git commit message"
   )
 end
