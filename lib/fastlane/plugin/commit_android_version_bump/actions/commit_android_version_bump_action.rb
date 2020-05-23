@@ -14,7 +14,7 @@ module Fastlane
             absolute_path = File.expand_path(build_file_folder)
             build_file_path = build_file_folder+"/build.gradle"
             # find the repo root path
-            repo_path = Actions.sh("git -C #{absolute_path} rev-parse --show-toplevel").strip
+            repo_path = Actions.sh("git -C '#{absolute_path}' rev-parse --show-toplevel").strip
             repo_pathname = Pathname.new(repo_path)
         else
             app_folder_name ||= params[:app_folder_name]
